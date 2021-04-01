@@ -3,14 +3,19 @@ var router = express.Router();
 const db = require('../../middleware/db')
 const crypt = require('../../middleware/crypt');
 
-const KEY = crypt.getKeyFromPassword(process.env.USER_ENCRYPT_PASSWORD, Buffer.from(process.env.USER_ENCRYPT_SALT));
+const KEY = crypt.getKeyFromPassword(process.env.STUDENT_ENCRYPT_PASSWORD, Buffer.from(process.env.STUDENT_ENCRYPT_SALT));
 
 router.post('/add', async function(req, res, next){
     if(!req.body){
         return res.json({success:false, message: 'error: invalid data received'});
     }   
-
-    encrypted_dict = await encrypt_dict(req.body);
+    
+    encrypted_dict = null;
+    try{
+        encrypted_dict = await encrypt_dict(req.body)
+    }catch(err){
+        return res.json({"success": false, "message": "error encrypting data"});
+    }
 
     // inserts father into db
     let father_id = null;
