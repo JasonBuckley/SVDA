@@ -6,7 +6,9 @@ const crypt = require('../../middleware/crypt');
 const KEY = crypt.getKeyFromPassword(process.env.STUDENT_ENCRYPT_PASSWORD, Buffer.from(process.env.STUDENT_ENCRYPT_SALT));
 
 router.post('/add', async function(req, res, next){
-    if(!req.body){
+    if(!req.session.user || !req.session.user.isAdmin){
+        return res.json({"success": false, "message": "Access denied!"}).status(401);
+    }else if(!req.body){
         return res.json({success:false, message: 'error: invalid data received'});
     }   
     
@@ -71,7 +73,6 @@ router.post('/add', async function(req, res, next){
     ];
 
     student = await db.query(db.pool, student_query, values).catch((err) => {
-        console.log(err);
         return {insertId: -1};
     });
 
@@ -93,6 +94,10 @@ router.delete('/remove', async function(req, res, next){
 });
 
 router.get('/', async function(req, res, next){
+    if(!req.session.user || !req.session.user.isAdmin){
+        return res.json({"success": false, "message": "Access denied!"}).status(401);
+    }
+
     let query = `
                 SELECT student_email, student_first_name, student_middle_name, student_last_name
                 student_phone_number, student_grade, student_status, f.father_first_name, 
@@ -108,7 +113,6 @@ router.get('/', async function(req, res, next){
     `;
 
     data = await db.query(db.pool, query).catch((err) => {
-        console.log(err);
         return null;
     });
 
@@ -163,7 +167,6 @@ async function decrypt_dict(dict){
                 }
             }
         }else{
-            console.log(dict[key])
             if(dict[key] != null){
                 decrypted_dict[key] = (await crypt.decrypt(dict[key], KEY)).toString('utf-8');
             }else{
