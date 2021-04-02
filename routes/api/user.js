@@ -22,7 +22,6 @@ router.post('/add', async function(req, res, next){
         return res.json({"success": false, "message": "Failed to add user to db!"}).status(400);
     });
 
-    console.log(data);
     return res.json({"success": true, "message":"User inserted successfully"});
 })
 
@@ -48,18 +47,18 @@ router.get('/login', async function (req, res, next) {
         return null;
     });
  
-    var query = 'SELECT COUNT(admin_email) FROM Adminstrator ' +
+    var query = 'SELECT COUNT(admin_email) as value FROM Adminstrator ' +
                 'WHERE admin_email = ' + db.pool.escape(user[0].user_email) 
                 ' Limit 1';
-
+  
     let isAdmin = await db.query(db.pool, query, values).catch((err) => {
-        return 0;
+        return {"value": 0};
     });
 
     if (Array.isArray(user) && user.length) {
         try{
             req.session.user = await decrypt_dict(user[0]);
-            req.session.isAdmin = isAdmin == 1;
+            req.session.user.isAdmin = isAdmin[0].value == 1;
             return res.json({ success: true });
         }catch(err){
             return res.json({ "success": false , "message": "Incorrect Credentials!"});
@@ -69,6 +68,26 @@ router.get('/login', async function (req, res, next) {
         delete req.session.username;
         return res.json({ "success": false , "message": "Incorrect Credentials!"});
     }
+});
+
+/**
+ * Adds an email address to the list of administrator accounts.
+ */
+router.post('/admin/add', async function(req, res, next){
+    if(!req.session.user || !req.session.user.isAdmin){
+        return res.json({"success": false, "message": "Access denied!"}).status(401);
+    }else if(!req.body.admin_email){
+        return res.json({"success": false, "message": "Invalid data received!"});
+    }
+
+    let query = "INSERT INTO Adminstrator VALUES(NULL, ?)";
+    let values = [await crypt.encrypt(req.body['admin_email'], KEY)];
+
+    let data = await db.query(db.pool, query, values).catch((err) => {
+        return res.json({"success": false, "message": "Failed to add email to admin list!"}).status(400);
+    });
+
+    return res.json({"success": true, "message": "admin email inserted successfully"});
 });
 
 /**
@@ -107,7 +126,6 @@ router.get('/logout', async function (req, res, next) {
                 }
             }
         }else{
-            console.log(dict[key])
             if(dict[key] != null){
                 decrypted_dict[key] = (await crypt.decrypt(dict[key], KEY)).toString('utf-8');
             }else{
