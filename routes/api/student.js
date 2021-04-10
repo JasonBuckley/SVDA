@@ -1,3 +1,4 @@
+const nodemailer = require('nodemailer');
 var express = require('express');
 var router = express.Router();
 const db = require('../../middleware/db')
@@ -98,6 +99,7 @@ router.get('/', async function(req, res, next){
         return res.json({"success": false, "message": "Access denied!"}).status(401);
     }
 
+
     let query = `
                 SELECT student_email, student_first_name, student_middle_name, student_last_name
                 student_phone_number, student_grade, student_status, f.father_first_name, 
@@ -119,6 +121,44 @@ router.get('/', async function(req, res, next){
     decrypted_data = [];
     for(var i in data){
         decrypted_data.push(await decrypt_dict(data[i]));
+    }
+
+    // start for node mailer
+    let transport = nodemailer.createTransport({
+        // This code allows to send test emails to a fake server using mail trap
+        host: 'smtp.mailtrap.io',
+          port: 2525,
+          auth: {
+             user: process.env.MAILTRAP_USER,
+             pass: process.env.MAILTRAP_PASSWORD
+          }
+      
+    });
+
+    // loop through data of student info
+    for(item in data) {
+        //console.log(mockdata[item][0]);
+        let message = {
+          from: 'user1@mail.com',
+          to: data[item].student_email,
+          subject: 'Project Deadline',
+          //text: 'Discuss test cases', // Used if only sending message with no html content (can't use both text and html at the same time)
+          html: 'Organization logo: <img src="cid:12345">', // html content wrapped in quotes
+          attachments:[
+            {
+              filename: '', // optional for file name
+              path: 'https://svdreamacademy.org/wp-content/themes/svdreama/images/logo-svda.png', // path to image (either local or online)
+              cid: '12345' // unique id for image content (create your own cid value)
+            }
+          ]
+        };
+        transport.sendMail(message, function(err, info) {
+          if (err) {
+            console.log(err)
+          } else {
+            console.log(info);
+          }
+        });
     }
 
     return res.json(decrypted_data);
