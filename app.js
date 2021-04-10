@@ -4,10 +4,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const session = require('express-session');
-
-// config partials for hbs
-var hbs = require("hbs");
-hbs.registerPartials(path.join(__dirname, "views/partials"));
+const ejs = require("ejs");
 
 // routers
 var indexRouter = require('./routes/index');
@@ -25,7 +22,7 @@ app.use(session({
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'hbs');
+app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
 app.use(express.json());
