@@ -6,16 +6,17 @@ const crypt = require('../../middleware/crypt');
 const KEY = crypt.getKeyFromPassword(process.env.STUDENT_ENCRYPT_PASSWORD, Buffer.from(process.env.STUDENT_ENCRYPT_SALT));
 
 router.post('/add', async function(req, res, next){
-    if(!req.session.user || !req.session.user.isAdmin){
+    if((!req.session.user || !req.session.user.isAdmin)){
         return res.json({"success": false, "message": "Access denied!"}).status(401);
     }else if(!req.body){
         return res.json({success:false, message: 'error: invalid data received'});
     }   
-    
+
     encrypted_dict = null;
     try{
         encrypted_dict = await encrypt_dict(req.body)
     }catch(err){
+        console.log(err);
         return res.json({"success": false, "message": "error encrypting data"});
     }
 
@@ -65,11 +66,11 @@ router.post('/add', async function(req, res, next){
     }
 
     // inserts student into db
-    let student_query = 'INSERT INTO Student VALUES(NULL,?,?,?,?,?,?,?,?,?,?)';
+    let student_query = 'INSERT INTO Student VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)';
     var values = [
         encrypted_dict['student_email'], encrypted_dict['student_first_name'], encrypted_dict['student_middle_name'],
         encrypted_dict['student_last_name'], encrypted_dict['student_phone_number'], father_id, mother_id, guardian_id,
-        encrypted_dict['student_grade'], encrypted_dict['student_status']
+        encrypted_dict['student_grade'], encrypted_dict['student_status'], encrypted_dict['student_city']
     ];
 
     student = await db.query(db.pool, student_query, values).catch((err) => {
