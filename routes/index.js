@@ -4,7 +4,7 @@ const db = require('../middleware/db');
 var router = express.Router();
 const crypt = require('../middleware/crypt');
 
-/* GET home page. */
+/* GET Home Page. */
 router.get('/', function(req, res, next) {
   if(req.session.user){
     return res.render('index', { title: 'Rubenson' });
