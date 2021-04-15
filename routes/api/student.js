@@ -6,17 +6,16 @@ const crypt = require('../../middleware/crypt');
 const KEY = crypt.getKeyFromPassword(process.env.STUDENT_ENCRYPT_PASSWORD, Buffer.from(process.env.STUDENT_ENCRYPT_SALT));
 
 router.post('/add', async function(req, res, next){
-    if((!req.session.user || !req.session.user.isAdmin)){
+    if(!req.session.user || !req.session.user.isAdmin){
         return res.json({"success": false, "message": "Access denied!"}).status(401);
     }else if(!req.body){
         return res.json({success:false, message: 'error: invalid data received'});
-    }   
-
+    }
+    
     encrypted_dict = null;
     try{
         encrypted_dict = await encrypt_dict(req.body)
     }catch(err){
-        console.log(err);
         return res.json({"success": false, "message": "error encrypting data"});
     }
 
@@ -74,6 +73,7 @@ router.post('/add', async function(req, res, next){
     ];
 
     student = await db.query(db.pool, student_query, values).catch((err) => {
+        console.log(err);
         return {insertId: -1};
     });
 
@@ -117,7 +117,48 @@ router.get('/', async function(req, res, next){
         return null;
     });
 
-    decrypted_data = [];
+    let decrypted_data = [];
+    for(var i in data){
+        decrypted_data.push(await decrypt_dict(data[i]));
+    }
+
+    return res.json(decrypted_data);
+});
+
+router.get("/get-emails", async function(req, res, next){
+    if(!req.session.user || !req.session.user.isAdmin){
+        return res.json({"success": false, "message": "Access denied!"}).status(401);
+    }
+
+    if(!req.query){
+        return res.json({"success": false, "message": "Invalid request"})
+    }
+
+    console.log(req.query["grade"]);
+
+    let query = "SELECT student_email FROM Student WHERE";
+    let values = [];
+    let firstFilter = true;
+
+    if(req.query["grade"]){
+        query+= " student_grade = ?";
+        firstFilter*= false;
+        values.push(await crypt.encrypt(req.query["grade"], KEY));
+    }
+
+    let data = null;
+    if(firstFilter){
+        query = "SELECT student_email FROM Student;"
+        data =  await db.query(db.pool, query).catch((err) => {
+            return [];
+        })
+    }else{
+        data = await db.query(db.pool, query, values).catch((err) => {
+            return [];
+        })
+    }
+
+    let decrypted_data = [];
     for(var i in data){
         decrypted_data.push(await decrypt_dict(data[i]));
     }
@@ -178,6 +219,5 @@ async function decrypt_dict(dict){
 
     return decrypted_dict;
 }
-
 
 module.exports = router;
