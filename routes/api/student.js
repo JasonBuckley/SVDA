@@ -137,18 +137,22 @@ router.get('/', async function(req, res, next){
 
     // loop through data of student info
     for(item in data) {
-        //console.log(mockdata[item][0]);
         let message = {
-          from: 'user1@mail.com',
-          to: data[item].student_email,
-          subject: 'Project Deadline',
-          //text: 'Discuss test cases', // Used if only sending message with no html content (can't use both text and html at the same time)
-          html: 'Organization logo: <img src="cid:12345">', // html content wrapped in quotes
+          from: '', // sender
+          to: data[item].student_email, // reciever
+          subject: '', // subject
+          text: '', // Used if only sending message with no html content (can't use both text and html at the same time)
+          html: '', // html content wrapped in quotes
           attachments:[
             {
               filename: '', // optional for file name
-              path: 'https://svdreamacademy.org/wp-content/themes/svdreama/images/logo-svda.png', // path to image (either local or online)
-              cid: '12345' // unique id for image content (create your own cid value)
+              path: '', // path to image (either local or online)
+              cid: '' // unique id for image content (create your own cid value)
+            },
+            {
+                filename: '', // file name
+                path: '', // path to pdf file (must match file name)
+                contentType: 'application/pdf'
             }
           ]
         };
