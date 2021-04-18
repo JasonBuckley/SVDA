@@ -13,6 +13,15 @@ router.get('/', function(req, res, next) {
   return res.render('login');
 });
 
+/* GET addStudent page. */
+router.get('/add', function(req, res, next) {
+  if(req.session.user){
+    return res.render('add', { title: 'Add Student' });
+  }
+
+  return res.render('add');
+});
+
 router.get('/add-mockdata', async function(req, res){
   //Sql line: INSERT INTO Student VALUES(NULL, "email@email.com", "first1", "m1", "last1", "8318318310", NULL, NULL, NULL, 11, "current")
   let query = "INSERT INTO Student VALUES(NULL,?,?,?,?,?,NULL,NULL,NULL,?,?)"
