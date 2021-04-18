@@ -63,6 +63,7 @@ CREATE TABLE Student(
     student_grade VARBINARY(30),
     student_status VARBINARY(92),
     student_city VARBINARY(92),
+    student_school VARBINARY(283),
 
     PRIMARY KEY(student_id),
     CONSTRAINT unique_student UNIQUE (student_email, student_first_name, student_last_name),
