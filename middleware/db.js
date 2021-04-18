@@ -9,10 +9,10 @@ const sqlConfig = {
     database: process.env.SQL_DATABASE
 };
 
-function query(pool, query, data=[]){
+function query(conn, query, data=[]){
     if(Array.isArray(data) && data.length == 0){
         return new Promise((resolve, reject) => {
-            pool.query(query, (err, results) => {
+            conn.query(query, (err, results) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -22,7 +22,7 @@ function query(pool, query, data=[]){
         });
     }else{
         return new Promise((resolve, reject) => {
-            pool.query(query, data, (err, results) => {
+            conn.query(query, data, (err, results) => {
                 if (err) {
                     reject(err);
                 } else {
