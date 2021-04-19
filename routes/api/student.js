@@ -6,9 +6,7 @@ const crypt = require('../../middleware/crypt');
 const KEY = crypt.getKeyFromPassword(process.env.STUDENT_ENCRYPT_PASSWORD, Buffer.from(process.env.STUDENT_ENCRYPT_SALT));
 
 router.post('/add', async function (req, res, next) {
-    /*if(!req.session.user || !req.session.user.isAdmin){
-        return res.json({"success": false, "message": "Access denied!"}).status(401);
-    }else */if (!req.body) {
+    if (!req.body) {
         return res.json({ success: false, message: 'error: invalid data received' });
     }
 
@@ -81,7 +79,7 @@ router.post('/add', async function (req, res, next) {
                             encrypted_dict['student_grade'], encrypted_dict['student_status'], encrypted_dict['student_city'],
                             encrypted_dict['student_school']
                         ];
-                        
+
                         // try to insert student into db
                         let student = await db.query(conn, student_query, values).catch((err) => {
                             return { insertId: -1 };
@@ -110,7 +108,7 @@ router.post('/add', async function (req, res, next) {
                             });
                         }
                     }
-                })
+                });
             }).catch((err) => {
                 return -1;
             });
@@ -127,16 +125,91 @@ router.put('/update', async function (req, res, next) {
     return;
 });
 
+/**
+ * Deletes a student from the db and removes the student's mother, father, and guardian 
+ * from the db.
+ */
 router.delete('/remove', async function (req, res, next) {
-    /*
-        DELETE FROM Father WHERE father_id NOT IN (SELECT Student.father_id FROM Student);
-        DELETE FROM Mother WHERE mother_id NOT IN (SELECT Student.father_id FROM Student);
-        DELETE FROM Guardian WHERE guardian_id NOT IN (SELECT Student.guardian_id FROM Student);
-    */
+    if (!req.body["student_id"]) {
+        return res.json({ success: false, message: "invalid request" }).status(400);
+    }
 
-    return;
+    let affectedRows = await new Promise((resolve, reject) => {
+        db.pool.getConnection(async (err, conn) => {
+            conn.beginTransaction(async (err) => {
+                if (err) {
+                    conn.rollback(() => {
+                        conn.release();
+                    });
+                } else {
+                    // queries
+                    let query = "SELECT father_id, mother_id, guardian_id FROM STUDENT WHERE student_id = ?;";
+                    let query_delete_father = "DELETE FROM Father WHERE father_id = ?";
+                    let query_delete_mother = "DELETE FROM Mother WHERE mother_id = ?";
+                    let query_delete_guardian = "DELETE FROM Guardian WHERE guardian_id = ?;";
+                    let query_delete_student = "DELETE FROM Student WHERE student_id = ?;";
+                    let values = req.body["student_id"];
+
+                    let ids = await db.query(conn, query, values).catch((err) => {
+                        return [];
+                    })
+
+                    // delete student
+                    let data = await db.query(conn, query_delete_student, values).catch((err) => {
+                        return { affectedRows: -1 };
+                    });
+
+                    if (Array.isArray(ids) && ids.length) {
+                        // delete father of student
+                        await db.query(conn, query_delete_father, [ids[0].father_id]).catch((err) => {
+                            return;
+                        });
+
+                        // delete mother of student
+                        await db.query(conn, query_delete_mother, [ids[0].mother_id]).catch((err) => {
+                            return;
+                        });
+                        
+                        // delete guardian of student
+                        await db.query(conn, query_delete_guardian, [ids[0].guardian_id]).catch((err) => {
+                            return;
+                        });
+                    }
+
+                    // if affectedRows is less then 0 then the delete has failed so we need to rollback the changes
+                    if (data.affectedRows < 0) {
+                        conn.rollback(() => {
+                            conn.release();
+                        });
+                        resolve(data.affectedRows);
+                    } else {
+                        // commit the changes
+                        conn.commit((err) => {
+                            // if a error occurs rollback the changes.
+                            if (err) {
+                                conn.rollback(() => {
+                                    conn.release();
+                                });
+                                reject(err);
+                            } else {
+                                conn.release();
+                                resolve(data.affectedRows);
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    }).catch((err) => {
+        return -1;
+    });
+
+    return res.json({success: affectedRows > 0});
 });
 
+/**
+ * Gets all students from the database.
+ */
 router.get('/', async function (req, res, next) {
     if (!req.session.user || !req.session.user.isAdmin) {
         return res.json({ "success": false, "message": "Access denied!" }).status(401);
@@ -177,18 +250,18 @@ router.get("/get-emails", async function (req, res, next) {
         return res.json({ "success": false, "message": "Invalid request" })
     }
 
-    console.log(req.query["grade"]);
-
     let query = "SELECT student_email FROM Student WHERE";
     let values = [];
     let firstFilter = true;
 
+    // filters by grade
     if (req.query["grade"]) {
         query += " student_grade = ?";
         firstFilter *= false;
         values.push(await crypt.encrypt(req.query["grade"], KEY));
     }
 
+    // filters by current/former status
     if (req.query["status"]) {
         if (firstFilter) {
             firstFilter *= false;
@@ -200,7 +273,32 @@ router.get("/get-emails", async function (req, res, next) {
         values.push(await crypt.encrypt(req.query["status"], KEY))
     }
 
+    // filters by school
+    if (req.query['school']) {
+        if (firstFilter) {
+            firstFilter *= false;
+        } else {
+            query += " AND"
+        }
+
+        query += " student_school = ?";
+        values.push(await crypt.encrypt(req.query['school'], KEY));
+    }
+
+    // filters by city
+    if (req.query['city']) {
+        if (firstFilter) {
+            firstFilter *= false;
+        } else {
+            query += " AND"
+        }
+
+        query += " student_city = ?";
+        values.push(await crypt.encrypt(req.query['city'], KEY));
+    }
+
     let data = null;
+    // if first filter is still true, then get all emails since no filters have been applied.
     if (firstFilter) {
         query = "SELECT student_email FROM Student;"
         data = await db.query(db.pool, query).catch((err) => {
@@ -212,6 +310,7 @@ router.get("/get-emails", async function (req, res, next) {
         });
     }
 
+    // decrypt all the emails so that messages can be sent to them.
     let decrypted_data = [];
     for (var i in data) {
         decrypted_data.push(await decrypt_dict(data[i]));
