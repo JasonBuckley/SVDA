@@ -62,8 +62,11 @@ CREATE TABLE Student(
     guardian_id INT,
     student_grade VARBINARY(30),
     student_status VARBINARY(92),
+    student_city VARBINARY(92),
+    student_school VARBINARY(283),
 
     PRIMARY KEY(student_id),
+    CONSTRAINT unique_student UNIQUE (student_email, student_first_name, student_last_name),
     CONSTRAINT father_id_fk FOREIGN KEY(father_id) REFERENCES Father (father_id),
     CONSTRAINT mother_id_fk FOREIGN KEY(mother_id) REFERENCES Mother (mother_id),
     CONSTRAINT guardian_id_fk FOREIGN KEY(guardian_id) REFERENCES Guardian (guardian_id)

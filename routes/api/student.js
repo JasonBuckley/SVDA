@@ -5,107 +5,232 @@ const crypt = require('../../middleware/crypt');
 
 const KEY = crypt.getKeyFromPassword(process.env.STUDENT_ENCRYPT_PASSWORD, Buffer.from(process.env.STUDENT_ENCRYPT_SALT));
 
-router.post('/add', async function(req, res, next){
-    if(!req.session.user || !req.session.user.isAdmin){
-        return res.json({"success": false, "message": "Access denied!"}).status(401);
-    }else if(!req.body){
-        return res.json({success:false, message: 'error: invalid data received'});
-    }   
+router.post('/add', async function (req, res, next) {
+    if (!req.session.user || !req.session.user.isAdmin) {
+        return res.json({ "success": false, "message": "Access denied!" }).status(401);
+    }
     
-    encrypted_dict = null;
-    try{
+    if (!req.body) {
+        return res.json({ success: false, message: 'error: invalid data received' });
+    }
+
+    let encrypted_dict = null;
+    try {
         encrypted_dict = await encrypt_dict(req.body)
-    }catch(err){
-        return res.json({"success": false, "message": "error encrypting data"});
+    } catch (err) {
+        return res.json({ "success": false, "message": "error encrypting data" });
     }
 
-    // inserts father into db
-    let father_id = null;
-    let father_query = 'INSERT INTO Father VALUES(NULL,?,?,?,?,?,?,?,?)';
-    if(encrypted_dict['father']){
-        var values = []
-        for(var i in encrypted_dict['father']){
-            values.push(encrypted_dict['father'][i]);
-        }
+    let insertId = await new Promise((resolve) => {
+        db.pool.getConnection(async (err, conn) => {
+            let temp = await new Promise((resolve, reject) => {
+                conn.beginTransaction(async (err) => {
+                    if (err) {
+                        conn.rollback(() => {
+                            conn.release();
+                        });
+                    } else {
+                        // inserts father into db
+                        let father_id = null;
+                        let father_query = 'INSERT INTO Father VALUES(NULL,?,?,?,?,?,?,?,?)';
+                        if (encrypted_dict['father']) {
+                            var values = []
+                            for (var i in encrypted_dict['father']) {
+                                values.push(encrypted_dict['father'][i]);
+                            }
 
-        father = await db.query(db.pool, father_query, values).catch((err) => {
-            return null;
+                            father = await db.query(conn, father_query, values).catch((err) => {
+                                return null;
+                            });
+                            father_id = father ? father.insertId : null;
+                        }
+
+                        // inserts mother into db
+                        let mother_query = 'INSERT INTO Mother VALUES(NULL,?,?,?,?,?,?,?,?)';
+                        let mother_id = null;
+                        if (encrypted_dict['mother']) {
+                            var values = []
+                            for (var i in encrypted_dict['mother']) {
+                                values.push(encrypted_dict['mother'][i]);
+                            }
+
+                            mother = await db.query(conn, mother_query, values).catch((err) => {
+                                return null;
+                            });
+                            mother_id = mother ? mother.insertId : null;
+                        }
+
+                        // inserts guardian into db
+                        let guardian_query = 'INSERT INTO Guardian VALUES(NULL,?,?,?)';
+                        let guardian_id = null;
+                        if (encrypted_dict['guardian']) {
+                            var values = []
+                            for (var i in encrypted_dict['guardian']) {
+                                values.push(encrypted_dict['guardian'][i]);
+                            }
+
+                            guardian = await db.query(conn, guardian_query, values).catch((err) => {
+                                return null;
+                            });
+                            guardian_id = guardian ? guardian.insertId : null;
+                        }
+
+                        // prepare values and query to insert student into db
+                        let student_query = 'INSERT INTO Student VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?)';
+                        var values = [
+                            encrypted_dict['student_email'], encrypted_dict['student_first_name'], encrypted_dict['student_middle_name'],
+                            encrypted_dict['student_last_name'], encrypted_dict['student_phone_number'], father_id, mother_id, guardian_id,
+                            encrypted_dict['student_grade'], encrypted_dict['student_status'], encrypted_dict['student_city'],
+                            encrypted_dict['student_school']
+                        ];
+
+                        // try to insert student into db
+                        let student = await db.query(conn, student_query, values).catch((err) => {
+                            return { insertId: -1 };
+                        });
+                        let insertId = student.insertId;
+
+                        // if insertId is less then 0 then the insert has failed so we need to rollback the changes
+                        if (insertId < 0) {
+                            conn.rollback(() => {
+                                conn.release();
+                            });
+                            resolve(insertId);
+                        } else {
+                            // commit the changes
+                            conn.commit((err) => {
+                                // if a error occurs rollback the changes.
+                                if (err) {
+                                    conn.rollback(() => {
+                                        conn.release();
+                                    });
+                                    reject(err);
+                                } else {
+                                    conn.release();
+                                    resolve(insertId);
+                                }
+                            });
+                        }
+                    }
+                });
+            }).catch((err) => {
+                return -1;
+            });
+            resolve(temp);
         });
-        father_id = father ? father.insertId : null;
-    }
-
-    // inserts mother into db
-    let mother_query = 'INSERT INTO Mother VALUES(NULL,?,?,?,?,?,?,?,?)';
-    let mother_id = null;
-    if(encrypted_dict['mother']){
-        var values = []
-        for(var i in encrypted_dict['mother']){
-            values.push(encrypted_dict['mother'][i]);
-        }
-
-        mother = await db.query(db.pool, mother_query, values).catch((err) => {
-            return null;
-        });
-        mother_id = mother ? mother.insertId : null;
-    }
-    
-    // inserts guardian into db
-    let guardian_query = 'INSERT INTO Guardian VALUES(NULL,?,?,?)';
-    let guardian_id = null;
-    if(encrypted_dict['guardian']){
-        var values = []
-        for(var i in encrypted_dict['guardian']){
-            values.push(encrypted_dict['guardian'][i]);
-        }
-
-        guardian = await db.query(db.pool, guardian_query, values).catch((err) => {
-            return null;
-        });
-        guardian_id = guardian ? guardian.insertId : null;
-    }
-
-    // inserts student into db
-    let student_query = 'INSERT INTO Student VALUES(NULL,?,?,?,?,?,?,?,?,?,?)';
-    var values = [
-        encrypted_dict['student_email'], encrypted_dict['student_first_name'], encrypted_dict['student_middle_name'],
-        encrypted_dict['student_last_name'], encrypted_dict['student_phone_number'], father_id, mother_id, guardian_id,
-        encrypted_dict['student_grade'], encrypted_dict['student_status']
-    ];
-
-    student = await db.query(db.pool, student_query, values).catch((err) => {
-        return {insertId: -1};
+    }).catch((err) => {
+        return -1;
     });
 
-    return res.json({success: student.insertId > -1});
+    return res.json({ success: insertId > -1 });
 });
 
-router.put('/update', async function(req, res, next){
+router.put('/update', async function (req, res, next) {
     return;
 });
 
-router.delete('/remove', async function(req, res, next){
-    /*
-        DELETE FROM Father WHERE father_id NOT IN (SELECT Student.father_id FROM Student);
-        DELETE FROM Mother WHERE mother_id NOT IN (SELECT Student.father_id FROM Student);
-        DELETE FROM Guardian WHERE guardian_id NOT IN (SELECT Student.guardian_id FROM Student);
-    */
+/**
+ * Deletes a student from the db and removes the student's mother, father, and guardian 
+ * from the db.
+ */
+router.delete('/remove', async function (req, res, next) {
+    if (!req.session.user || !req.session.user.isAdmin) {
+        return res.json({ "success": false, "message": "Access denied!" }).status(401);
+    }
+    
+    if (!req.body["student_id"]) {
+        return res.json({ success: false, message: "invalid request" }).status(400);
+    }
 
-    return;
+    let affectedRows = await new Promise((resolve, reject) => {
+        db.pool.getConnection(async (err, conn) => {
+            conn.beginTransaction(async (err) => {
+                if (err) {
+                    conn.rollback(() => {
+                        conn.release();
+                    });
+                } else {
+                    // queries
+                    let query = "SELECT father_id, mother_id, guardian_id FROM STUDENT WHERE student_id = ?;";
+                    let query_delete_father = "DELETE FROM Father WHERE father_id = ?";
+                    let query_delete_mother = "DELETE FROM Mother WHERE mother_id = ?";
+                    let query_delete_guardian = "DELETE FROM Guardian WHERE guardian_id = ?;";
+                    let query_delete_student = "DELETE FROM Student WHERE student_id = ?;";
+                    let values = req.body["student_id"];
+
+                    let ids = await db.query(conn, query, values).catch((err) => {
+                        return [];
+                    })
+
+                    // delete student
+                    let data = await db.query(conn, query_delete_student, values).catch((err) => {
+                        return { affectedRows: -1 };
+                    });
+
+                    if (Array.isArray(ids) && ids.length) {
+                        // delete father of student
+                        await db.query(conn, query_delete_father, [ids[0].father_id]).catch((err) => {
+                            return;
+                        });
+
+                        // delete mother of student
+                        await db.query(conn, query_delete_mother, [ids[0].mother_id]).catch((err) => {
+                            return;
+                        });
+                        
+                        // delete guardian of student
+                        await db.query(conn, query_delete_guardian, [ids[0].guardian_id]).catch((err) => {
+                            return;
+                        });
+                    }
+
+                    // if affectedRows is less then 0 then the delete has failed so we need to rollback the changes
+                    if (data.affectedRows < 0) {
+                        conn.rollback(() => {
+                            conn.release();
+                        });
+                        resolve(data.affectedRows);
+                    } else {
+                        // commit the changes
+                        conn.commit((err) => {
+                            // if a error occurs rollback the changes.
+                            if (err) {
+                                conn.rollback(() => {
+                                    conn.release();
+                                });
+                                reject(err);
+                            } else {
+                                conn.release();
+                                resolve(data.affectedRows);
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    }).catch((err) => {
+        return -1;
+    });
+
+    return res.json({success: affectedRows > 0});
 });
 
-router.get('/', async function(req, res, next){
-    if(!req.session.user || !req.session.user.isAdmin){
-        return res.json({"success": false, "message": "Access denied!"}).status(401);
+/**
+ * Gets all students from the database.
+ */
+router.get('/', async function (req, res, next) {
+    if (!req.session.user || !req.session.user.isAdmin) {
+        return res.json({ "success": false, "message": "Access denied!" }).status(401);
     }
 
     let query = `
                 SELECT student_email, student_first_name, student_middle_name, student_last_name
-                student_phone_number, student_grade, student_status, f.father_first_name, 
-                f.father_last_name, f.father_phone_number, f.father_email, f.father_education,
-                f.father_place_birth, f.father_employer, f.father_job_title, m.mother_first_name,
-                m.mother_last_name, m.mother_phone_number, m.mother_email, m.mother_education,
-                m.mother_place_birth, m.mother_employer, m.mother_job_title, g.guardian_name,
-                g.guardian_email, g.guardian_phone_number
+                student_phone_number, student_grade, student_status, student_city, student_school,
+                f.father_first_name, f.father_last_name, f.father_phone_number, f.father_email, 
+                f.father_education, f.father_place_birth, f.father_employer, f.father_job_title, 
+                m.mother_first_name, m.mother_last_name, m.mother_phone_number, m.mother_email, 
+                m.mother_education, m.mother_place_birth, m.mother_employer, m.mother_job_title, 
+                g.guardian_name, g.guardian_email, g.guardian_phone_number
                 FROM Student s
                 LEFT JOIN Father f on s.father_id = f.father_id 
                 LEFT JOIN Mother m on s.mother_id = m.mother_id
@@ -116,8 +241,86 @@ router.get('/', async function(req, res, next){
         return null;
     });
 
-    decrypted_data = [];
-    for(var i in data){
+    let decrypted_data = [];
+    for (var i in data) {
+        decrypted_data.push(await decrypt_dict(data[i]));
+    }
+
+    return res.json(decrypted_data);
+});
+
+router.get("/get-emails", async function (req, res, next) {
+    if (!req.session.user || !req.session.user.isAdmin) {
+        return res.json({ "success": false, "message": "Access denied!" }).status(401);
+    }
+
+    if (!req.query) {
+        return res.json({ "success": false, "message": "Invalid request" })
+    }
+
+    let query = "SELECT student_email FROM Student WHERE";
+    let values = [];
+    let firstFilter = true;
+
+    // filters by grade
+    if (req.query["grade"]) {
+        query += " student_grade = ?";
+        firstFilter *= false;
+        values.push(await crypt.encrypt(req.query["grade"], KEY));
+    }
+
+    // filters by current/former status
+    if (req.query["status"]) {
+        if (firstFilter) {
+            firstFilter *= false;
+        } else {
+            query += " AND";
+        }
+
+        query += " student_status = ?";
+        values.push(await crypt.encrypt(req.query["status"], KEY))
+    }
+
+    // filters by school
+    if (req.query['school']) {
+        if (firstFilter) {
+            firstFilter *= false;
+        } else {
+            query += " AND"
+        }
+
+        query += " student_school = ?";
+        values.push(await crypt.encrypt(req.query['school'], KEY));
+    }
+
+    // filters by city
+    if (req.query['city']) {
+        if (firstFilter) {
+            firstFilter *= false;
+        } else {
+            query += " AND"
+        }
+
+        query += " student_city = ?";
+        values.push(await crypt.encrypt(req.query['city'], KEY));
+    }
+
+    let data = null;
+    // if first filter is still true, then get all emails since no filters have been applied.
+    if (firstFilter) {
+        query = "SELECT student_email FROM Student;"
+        data = await db.query(db.pool, query).catch((err) => {
+            return [];
+        });
+    } else {
+        data = await db.query(db.pool, query, values).catch((err) => {
+            return [];
+        });
+    }
+
+    // decrypt all the emails so that messages can be sent to them.
+    let decrypted_data = [];
+    for (var i in data) {
         decrypted_data.push(await decrypt_dict(data[i]));
     }
 
@@ -131,16 +334,16 @@ router.get('/', async function(req, res, next){
  * @param {JSON} dict 
  * @returns JSON of encrypted student info.
  */
- async function encrypt_dict(dict){
+async function encrypt_dict(dict) {
     let encrypted_dict = {};
 
-    for (var key in dict){
-        if(typeof(typeof(dict[key]) !== null) && typeof(dict[key]) === 'object'){
+    for (var key in dict) {
+        if (typeof (typeof (dict[key]) !== null) && typeof (dict[key]) === 'object') {
             encrypted_dict[key] = {};
-            for( var key2 in dict[key]){
+            for (var key2 in dict[key]) {
                 encrypted_dict[key][key2] = await crypt.encrypt(crypt.arrayToBuffer(dict[key][key2]), KEY);
             }
-        }else{
+        } else {
             encrypted_dict[key] = await crypt.encrypt(crypt.arrayToBuffer(dict[key]), KEY);
         }
     }
@@ -153,23 +356,23 @@ router.get('/', async function(req, res, next){
  * @param {JSON} dict 
  * @returns JSON that is decrypted student info.
  */
-async function decrypt_dict(dict){
+async function decrypt_dict(dict) {
     let decrypted_dict = {};
 
-    for (var key in dict){
-        if(!Buffer.isBuffer(dict[key]) && dict[key] != null){
+    for (var key in dict) {
+        if (!Buffer.isBuffer(dict[key]) && dict[key] != null) {
             decrypted_dict[key] = {};
-            for( var key2 in dict[key]){
-                if(dict[key] != null){
+            for (var key2 in dict[key]) {
+                if (dict[key] != null) {
                     decrypted_dict[key][key2] = (await crypt.decrypt(dict[key][key2], KEY)).toString('utf-8');
-                }else{
+                } else {
                     decrypted_dict[key][key2] = null;
                 }
             }
-        }else{
-            if(dict[key] != null){
+        } else {
+            if (dict[key] != null) {
                 decrypted_dict[key] = (await crypt.decrypt(dict[key], KEY)).toString('utf-8');
-            }else{
+            } else {
                 decrypted_dict[key] = null;
             }
         }
@@ -177,6 +380,5 @@ async function decrypt_dict(dict){
 
     return decrypted_dict;
 }
-
 
 module.exports = router;
