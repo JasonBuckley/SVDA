@@ -6,6 +6,10 @@ const crypt = require('../../middleware/crypt');
 const KEY = crypt.getKeyFromPassword(process.env.STUDENT_ENCRYPT_PASSWORD, Buffer.from(process.env.STUDENT_ENCRYPT_SALT));
 
 router.post('/add', async function (req, res, next) {
+    if (!req.session.user || !req.session.user.isAdmin) {
+        return res.json({ "success": false, "message": "Access denied!" }).status(401);
+    }
+    
     if (!req.body) {
         return res.json({ success: false, message: 'error: invalid data received' });
     }
@@ -130,6 +134,10 @@ router.put('/update', async function (req, res, next) {
  * from the db.
  */
 router.delete('/remove', async function (req, res, next) {
+    if (!req.session.user || !req.session.user.isAdmin) {
+        return res.json({ "success": false, "message": "Access denied!" }).status(401);
+    }
+    
     if (!req.body["student_id"]) {
         return res.json({ success: false, message: "invalid request" }).status(400);
     }
