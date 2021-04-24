@@ -1,0 +1,43 @@
+body {
+    text-align: center;
+    background-color: black;
+    font-family: 'Oswald', sans-serif;
+  }
+  img {
+    padding-top: 35px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  #form {
+    margin: 55px;
+  }
+  
+  .input {
+    font-family: 'Oswald', sans-serif;
+    padding: 10px 30px;
+    margin: 7px;
+    border: 1px solid black;
+    border-radius: 15px;
+    letter-spacing: 1px;
+  }
+  
+  /* SVDA Color: #9eca3c */
+  
+  button {
+    letter-spacing: 2px;
+    font-family: 'Oswald', sans-serif;
+    margin: 15px;
+    padding: 5px 10px;
+    background-color: #9eca3c;
+    border-radius: 5px;
+    color: white;
+  }
+  
+  footer {
+    color: white;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 5.5rem; 
+  }
