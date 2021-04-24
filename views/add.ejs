@@ -12,6 +12,7 @@
     <link href="css/add.css" rel="stylesheet" type="text/css" />
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   </head>
   <body>
     <h1>Add New Member</h1>
@@ -23,14 +24,15 @@
     <form method="POST" action="/add">
       <div id="filter">
         <div id="category">
-          
           Student's First Name: <input class="box" type="text" name="student_first_name"><br>
           Student's Middle Name: <input type="text" class="box" name="student_middle_name"><br>
           Student's Last Name: <input type="text" style="width:30%" class="box" name="student_last_name"><br>
           Student's Email: <input type="text" style="width:35%" class="box" name="student_email"><br>
           Student's Phone Number: <input type="text" class="box" name="student_phone_number"><br>
+          Student's City: <input type="text" class="box" name="student_city"><br>
+          Student's School: <input type="text" class="box" name="student_school"><br>
           Student's Grade: <input type="text" class="box" style="width:30px" name="student_grade"><br>
-          Student's Current Status: <input type="text" class="box" name="student_status"> 
+          Student's Current Status: <input type="text" class="box" name="student_status">
         </div>
       </div><br>
 
@@ -81,4 +83,10 @@
             <button>SEND</button>
         </div>
     </form>
+
+
+    <script>
+      
+    </script>
+
   </body>
