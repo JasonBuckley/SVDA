@@ -9,7 +9,7 @@ router.post('/add', async function (req, res, next) {
     if (!req.session.user || !req.session.user.isAdmin) {
         return res.json({ "success": false, "message": "Access denied!" }).status(401);
     }
-    
+
     if (!req.body) {
         return res.json({ success: false, message: 'error: invalid data received' });
     }
@@ -126,7 +126,115 @@ router.post('/add', async function (req, res, next) {
 });
 
 router.put('/update', async function (req, res, next) {
-    return;
+    if (!req.session.user || !req.session.user.isAdmin) {
+        return res.json({ "success": false, "message": "Access denied!" }).status(401);
+    }
+
+    if (!req.body) {
+        return res.json({ success: false, message: 'error: invalid data received' });
+    }
+
+    console.log(req.body)
+
+    let encrypted_dict = null;
+    try {
+        encrypted_dict = await encrypt_dict(req.body)
+    } catch (err) {
+        return res.json({ "success": false, "message": "error encrypting data" });
+    }
+
+    let affectedRows = await new Promise((resolve, reject) => {
+        db.pool.getConnection(async (err, conn) => {
+            conn.beginTransaction(async (err) => {
+                if (err) {
+                    conn.rollback(() => {
+                        conn.release();
+                    });
+                } else {
+                    let ids_query = "SELECT father_id, mother_id, guardian_id, student_id FROM Student WHERE student_id = ?";
+                    let values = [req.body['student_id']];
+                    let affectedRows = -1;
+
+                    let ids = await db.query(conn, ids_query, values).catch((err) => {
+                        console.log(err);
+                        return null;
+                    });
+
+                    if (Array.isArray(ids) && ids.length) {
+                        // father
+                        let father_query = 'UPDATE Father SET '
+                            + 'father_first_name = IFNULL(?, father_first_name), '
+                            + 'father_last_name = IFNULL(?, father_last_name), '
+                            + 'father_phone_number = IFNULL(?, father_phone_number), '
+                            + 'father_email = IFNULL(?, father_email), '
+                            + 'father_education = IFNULL(?, father_education), '
+                            + 'father_place_birth = IFNULL(?, father_place_birth), '
+                            + 'father_employer = IFNULL(?, father_employer), '
+                            + 'father_job_title = IFNULL(?, father_job_title) '
+                            + 'WHERE father_id = ?;';
+                        let father_values = [req.body["father_first_name"], req.body["father_last_name"], req.body["father_phone_number"], req.body["father_email"],
+                        req.body["father_education"], req.body["father_place_birth"], req.body["father_employer"], req.body["father_job_title"], ids[0].father_id];
+                        if (ids[0].father_id) {
+                            var temp = await db.query(conn, father_query, father_values).catch((err) =>{
+                                return {affectedRows: 0}
+                            });
+
+                            affectedRows += temp.affectedRows;
+                        }
+
+                        // mother
+                        let mother_query = 'UPDATE Mother SET '
+                            + 'mother_first_name = IFNULL(?, mother_first_name), '
+                            + 'mother_last_name = IFNULL(?, mother_last_name), '
+                            + 'mother_phone_number = IFNULL(?, mother_phone_number), '
+                            + 'mother_email = IFNULL(?, mother_email), '
+                            + 'mother_education = IFNULL(?, mother_education), '
+                            + 'mother_place_birth = IFNULL(?, mother_place_birth), '
+                            + 'mother_employer = IFNULL(?, mother_employer), '
+                            + 'mother_job_title = IFNULL(?, mother_job_title) '
+                            + 'WHERE mother_id = ?;';
+                        let mother_values = "";
+                        if (ids[0].mother_id) {
+
+                        }
+
+                        // guardian
+                        let guardian_query = "";
+                        let guaridan_values = "";
+                        if (ids[0].guardian_id) {
+
+                        }
+                    }
+
+                    // if affectedRows is less then 0 then the delete has failed so we need to rollback the changes
+                    if (affectedRows < 0) {
+                        conn.rollback(() => {
+                            conn.release();
+                        });
+                        resolve(affectedRows);
+                    } else {
+                        // commit the changes
+                        conn.commit((err) => {
+                            // if a error occurs rollback the changes.
+                            if (err) {
+                                conn.rollback(() => {
+                                    conn.release();
+                                });
+                                reject(err);
+                            } else {
+                                conn.release();
+                                resolve(affectedRows);
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    }).catch((err) => {
+        return -1;
+    });
+
+    return res.json({ success: affectedRows > 0 });
 });
 
 /**
@@ -137,7 +245,7 @@ router.delete('/remove', async function (req, res, next) {
     if (!req.session.user || !req.session.user.isAdmin) {
         return res.json({ "success": false, "message": "Access denied!" }).status(401);
     }
-    
+
     if (!req.body["student_id"]) {
         return res.json({ success: false, message: "invalid request" }).status(400);
     }
@@ -177,7 +285,7 @@ router.delete('/remove', async function (req, res, next) {
                         await db.query(conn, query_delete_mother, [ids[0].mother_id]).catch((err) => {
                             return;
                         });
-                        
+
                         // delete guardian of student
                         await db.query(conn, query_delete_guardian, [ids[0].guardian_id]).catch((err) => {
                             return;
@@ -212,7 +320,7 @@ router.delete('/remove', async function (req, res, next) {
         return -1;
     });
 
-    return res.json({success: affectedRows > 0});
+    return res.json({ success: affectedRows > 0 });
 });
 
 /**
