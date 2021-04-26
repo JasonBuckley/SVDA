@@ -21,7 +21,7 @@
         <p class="title">STUDENT INFORMATION</p>
       </div>
 
-    <form method="POST" action="/add">
+    <form id="add_student_form" method="POST" action="/student/add">
       <div id="filter">
         <div id="category">
           Student's First Name: <input class="box" type="text" name="student_first_name"><br>
@@ -86,7 +86,55 @@
 
 
     <script>
-      
+      let form = $("#add_student_form")
+
+      form.on('submit', (event) => {
+        event.preventDefault();
+        let formData = form.serializeArray();
+        let sendData = {}
+
+        let i = 0;
+        // add student information
+        for(i; i < 9; i++){
+          sendData[formData[i].name] = formData[i].value;
+        }
+
+        // add father information
+        if(formData[i].value){
+          sendData["father"] = {}
+          for(i; i < 17; i++){
+            sendData["father"][formData[i].name] = formData[i].value;
+          }
+        }
+
+        // add mother information
+        if(formData[i].value != ''){
+          sendData["mother"] = {}
+          for(i; i < 25; i++){
+            sendData["mother"][formData[i].name] = formData[i].value;
+          }
+        }
+
+        // add guardian information
+        if(formData[i].value != ''){
+          sendData["guardian"] = {}
+          for(i; i < formData.length; i++){
+            sendData["guardian"][formData[i].name] = formData[i].value;
+          }
+        }
+
+        // send data to backend to be added to db
+        $.ajax({
+          url: form.attr("action"),
+          type: 'POST',
+          dataType: "json",
+          contentType: "application/json",
+          data:  JSON.stringify(sendData),
+          success: (data, status) =>{
+            console.log(data);
+          }
+        });
+      });
     </script>
 
   </body>
