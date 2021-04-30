@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <header>
+    <div id="nav">
+        <img src="/img/logo.png" alt="SVDA LOGO" width="175px" height="100px">
+    </div>
+  </header>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>SVDA Add</title>
+    <link href="/css/add.css" rel="stylesheet" type="text/css" />
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="css/add.css" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  </head>
+  <body>
+    <h1>SDVA Members</h1>
+
+    <%for(student of students){%>
+        <a href="/author/edit?authorId=<%=author.authorId%> "> UPDATE </a>
+        <a href="#" class="deleteAuthor" authorId="<%=author.authorId%>"> DELETE </a>
+        <span><%=student.student_first_name%> <%=student.student_last_name%>, <%=student.student_school%>, <%=student.student_email%></span> <br>
+    <%}%>
+    <script>
+        $(".deleteAuthor").on("click", confirmDeleteAuthor);
+        function confirmDeleteAuthor(){
+            let authorName = $(this).next().html();
+            let deleteAuthor = confirm(`Delete record ${authorName} ?`);
+            if (deleteAuthor) {
+                //we need to delete record
+                let authorId = $(this).attr("authorId");
+                window.location.href = `/author/delete?authorId=${authorId}`; 
+            }   
+        }
+    </script>
+
+  </body>

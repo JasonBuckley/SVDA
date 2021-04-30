@@ -249,6 +249,33 @@ router.get('/', async function (req, res, next) {
     return res.json(decrypted_data);
 });
 
+router.get('/studentList', async function(req, res){
+    let query = `
+                SELECT student_email, student_first_name, student_middle_name, student_last_name
+                student_phone_number, student_grade, student_status, student_city, student_school,
+                f.father_first_name, f.father_last_name, f.father_phone_number, f.father_email, 
+                f.father_education, f.father_place_birth, f.father_employer, f.father_job_title, 
+                m.mother_first_name, m.mother_last_name, m.mother_phone_number, m.mother_email, 
+                m.mother_education, m.mother_place_birth, m.mother_employer, m.mother_job_title, 
+                g.guardian_name, g.guardian_email, g.guardian_phone_number
+                FROM Student s
+                LEFT JOIN Father f on s.father_id = f.father_id 
+                LEFT JOIN Mother m on s.mother_id = m.mother_id
+                LEFT JOIN Guardian g on s.guardian_id = g.guardian_id
+    `;
+    let data = await db.query(db.pool, query).catch((err) => {
+        return null;
+    });
+
+    let decrypted_data = [];
+    for (var i in data) {
+        decrypted_data.push(await decrypt_dict(data[i]));
+    }
+
+    console.log(decrypted_data);
+    res.render('studentList', {'students':decrypted_data});
+})
+
 router.get("/get-emails", async function (req, res, next) {
     if (!req.session.user || !req.session.user.isAdmin) {
         return res.json({ "success": false, "message": "Access denied!" }).status(401);
