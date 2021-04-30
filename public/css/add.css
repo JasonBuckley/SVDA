@@ -17,6 +17,13 @@ html {
   img {
     padding: 10px;
   }
+
+  #notice{
+    font-size: 13px;
+    margin: 2px;
+    color: red;
+    text-align: center;
+  }
   
   #filter, #input {
     width: 50%;
