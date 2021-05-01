@@ -7,7 +7,7 @@ const crypt = require('../middleware/crypt');
 /* GET home page. */
 router.get('/', function(req, res, next) {
   if(req.session.user){
-    return res.render('index', { title: 'Rubenson' });
+    return res.render('index');
   }
 
   return res.render('login');
