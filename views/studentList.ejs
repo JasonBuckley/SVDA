@@ -1,3 +1,5 @@
+<!-- This file displays all the students from the database, there should be 2 buttons, one to edit a student's information and the other to delete the student -->
+
 <!DOCTYPE html>
 <html>
   <header>
@@ -19,21 +21,8 @@
     <h1>SDVA Members</h1>
 
     <%for(student of students){%>
-        <a href="/author/edit?authorId=<%=author.authorId%> "> UPDATE </a>
-        <a href="#" class="deleteAuthor" authorId="<%=author.authorId%>"> DELETE </a>
         <span><%=student.student_first_name%> <%=student.student_last_name%>, <%=student.student_school%>, <%=student.student_email%></span> <br>
     <%}%>
-    <script>
-        $(".deleteAuthor").on("click", confirmDeleteAuthor);
-        function confirmDeleteAuthor(){
-            let authorName = $(this).next().html();
-            let deleteAuthor = confirm(`Delete record ${authorName} ?`);
-            if (deleteAuthor) {
-                //we need to delete record
-                let authorId = $(this).attr("authorId");
-                window.location.href = `/author/delete?authorId=${authorId}`; 
-            }   
-        }
-    </script>
+    
 
   </body>
