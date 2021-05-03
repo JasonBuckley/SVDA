@@ -28,40 +28,123 @@
         <p class="title">FILTER</p>
       </div>
 
+      
       <div id="filter">
         <div class="category">
-          <p>Year in Academy:</p>
-          <input type="checkbox" name="year" value="allYears"> ALL
-          <input type="checkbox" name="year" value="2015-2016"> 2015-2016
-          <input type="checkbox" name="year" value="2015-2016"> 2016-2017
-          <input type="checkbox" name="year" value="2015-2016"> 2017-2018
-          <input type="checkbox" name="year" value="2015-2016"> 2018-2019
-          <input type="checkbox" name="year" value="2015-2016"> 2019-2020
-          <input type="checkbox" name="year" value="2015-2016"> 2020-2021
-          
-        </div>
-        
-        <div class="category">
-          <p>School:</p>
-          <input type="checkbox" name="schools" value="allSchools"> ALL
-          <input type="checkbox" name="schools" value="AHS"> AHS
-          <input type="checkbox" name="schools" value="NSHS"> NSHS
-          <input type="checkbox" name="schools" value="EAHS"> EAHS
-          <input type="checkbox" name="schools" value="SHS"> SHS
-          <input type="checkbox" name="schools" value="other"> OTHER
+          <p>Existing SVDA Student:</p>
+          <input type="checkbox" name="svdaStudent" value="Both"> Both
+          <input type="checkbox" name="svdaStudent" value="Yes"> Yes
+          <input type="checkbox" name="svdaStudent" value="No"> No
         </div>
 
-        <div class="category">
-          <p>Graduation Year:</p>
-          <input type="checkbox" name="graduation" value="allGradYears"> ALL 
-          <input type="checkbox" name="graduation" value="2015"> 2015
-          <input type="checkbox" name="graduation" value="2016"> 2016
-          <input type="checkbox" name="graduation" value="2017"> 2017
-          <input type="checkbox" name="graduation" value="2018"> 2018
-          <input type="checkbox" name="graduation" value="2019"> 2019
-          <input type="checkbox" name="graduation" value="2020"> 2020
-          <input type="checkbox" name="graduation" value="other"> OTHER
-        </div>
+      <div class="category">
+        <p>Gender:</p>
+        <input type="checkbox" name="gender" value="ALL"> All Genders
+        <input type="checkbox" name="gender" value="M"> M
+        <input type="checkbox" name="gender" value="F"> F
+        <input type="checkbox" name="gender" value="Unidentified"> Prefer Not To Say
+      </div>
+
+      <div class="category">
+        <p>Age:</p>
+        <input type="checkbox" name="age" value="ALL"> All Ages
+        <input type="checkbox" name="age" value="13"> 13 & Under
+        <input type="checkbox" name="age" value="14"> 14
+        <input type="checkbox" name="age" value="15"> 15
+        <input type="checkbox" name="age" value="16"> 16
+        <input type="checkbox" name="age" value="17"> 17
+        <input type="checkbox" name="age" value="18"> 18
+        <input type="checkbox" name="age" value="19"> 19 & Over
+      </div>
+
+      <div class="category">
+        <p>Parent Situation:</p>
+        <input type="checkbox" name="parents" value="Both"> Has both parents
+        <input type="checkbox" name="parents" value="Mom"> Mom only
+        <input type="checkbox" name="parents" value="Dad"> Dad only
+        <input type="checkbox" name="parents" value="None"> Has no parents
+      </div>
+
+      <div class="category">
+        <p>Employed:</p>
+        <input type="checkbox" name="employed" value="Both"> Both
+        <input type="checkbox" name="employed" value="Yes"> Yes
+        <input type="checkbox" name="employed" value="No"> No
+      </div>
+
+      <div class="category">
+        <p>Qualifies for Free Lunch:</p>
+        <input type="checkbox" name="freeLunch" value="Both"> Both
+        <input type="checkbox" name="freeLunch" value="Yes"> Yes
+        <input type="checkbox" name="freeLunch" value="No"> No
+      </div>
+
+      <div class="category">
+        <p>City:</p>
+        <input type="checkbox" name="city" value="ALL"> All Cities
+        <input type="checkbox" name="city" value="Salinas"> Salinas
+        <input type="checkbox" name="city" value="Monterey"> Monterey
+        <input type="checkbox" name="city" value="Carmel"> Carmel
+        <input type="checkbox" name="city" value="Gonzales"> Gonzales
+        <input type="checkbox" name="city" value="King City"> King City
+        <input type="checkbox" name="city" value="Greenfield"> Greenfield
+        <input type="checkbox" name="city" value="Soledad"> Soledad
+        <input type="checkbox" name="city" value="Castroville"> Castroville
+        <input type="checkbox" name="city" value="Watsonville"> Watsonville
+        <input type="checkbox" name="city" value="Other"> Other
+      </div>
+
+      <div class="category">
+        <p>Year in Academy:</p>
+        <input type="checkbox" name="year" value="allYears"> ALL
+        <input type="checkbox" name="year" value="2015-2016"> 2015-2016
+        <input type="checkbox" name="year" value="2015-2016"> 2016-2017
+        <input type="checkbox" name="year" value="2015-2016"> 2017-2018
+        <input type="checkbox" name="year" value="2015-2016"> 2018-2019
+        <input type="checkbox" name="year" value="2015-2016"> 2019-2020
+        <input type="checkbox" name="year" value="2015-2016"> 2020-2021
+
+      </div>
+
+      <div class="category">
+        <p>School:</p>
+        <input type="checkbox" name="schools" value="allSchools"> ALL
+        <input type="checkbox" name="schools" value="AHS"> AHS
+        <input type="checkbox" name="schools" value="NSHS"> NSHS
+        <input type="checkbox" name="schools" value="EAHS"> EAHS
+        <input type="checkbox" name="schools" value="SHS"> SHS
+        <input type="checkbox" name="schools" value="other"> OTHER
+      </div>
+
+      <div class="category">
+        <p>Graduation Year:</p>
+        <input type="checkbox" name="graduationYear" value="allGradYears"> ALL 
+        <input type="checkbox" name="graduationYear" value="2015"> 2015
+        <input type="checkbox" name="graduationYear" value="2016"> 2016
+        <input type="checkbox" name="graduationYear" value="2017"> 2017
+        <input type="checkbox" name="graduationYear" value="2018"> 2018
+        <input type="checkbox" name="graduationYear" value="2019"> 2019
+        <input type="checkbox" name="graduationYear" value="2020"> 2020
+        <input type="checkbox" name="graduationYear" value="other"> OTHER
+      </div>
+
+      <div class="category">
+        <p>GPA:</p>
+        <input type="checkbox" name="gpa" value="ALL"> All
+        <input type="checkbox" name="gpa" value="2.0 or lower"> 2.0 or lower
+        <input type="checkbox" name="gpa" value="2.0-2.5"> 2.0 - 2.5
+        <input type="checkbox" name="gpa" value="2.5-3.0"> 2.5 - 3.0
+        <input type="checkbox" name="gpa" value="3.0-3.5"> 3.0 - 3.5
+        <input type="checkbox" name="gpa" value="3.5-4.0"> 3.5 - 4.0 
+        <input type="checkbox" name="gpa" value="4.0+"> 4.0+
+      </div>
+
+
+      <div class="category">
+        <p>Has been in Foster Care:</p>
+        <input type="checkbox" name="fosterCare" value="Yes"> Yes
+        <input type="checkbox" name="fosterCare" value="No"> No
+        <input type="checkbox" name="fosterCare" value=""> N/A
       </div>
       
       <br>
