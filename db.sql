@@ -13,61 +13,102 @@ CREATE TABLE Adminstrator(
     PRIMARY KEY(admin_id)
 );
 
+CREATE TABLE Student(
+    student_id INT NOT NULL AUTO_INCREMENT,
+    student_first_name VARBINARY(92) NOT NULL,
+    student_middle_name VARBINARY(92),
+    student_last_name VARBINARY(92) NOT NULL,    
+    student_status VARCHAR(32),
+    student_age TINYINT,
+    student_dob DATE,
+    student_ethnic_group VARCHAR(64),
+    student_gender VARCHAR(32),
+    student_foster VARCHAR(32),
+    student_siblings_count TINYINT,
+    student_lives_with VARCHAR(64), 
+    student_family_income VARCHAR(64),
+    student_place_of_work VARCHAR(64),
+    student_approx_work_hours TINYINT,
+    student_experienced_health_issue VARCHAR(32),
+    student_takes_medication VARCHAR(32),
+
+    PRIMARY KEY(student_id)
+);
+
+CREATE TABLE Student_School_Info(
+    school_info_id INT NOT NULL AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    student_grade TINYINT,
+    student_school VARCHAR(255),
+    student_GPA FLOAT(4,3),
+    student_discount_lunch VARCHAR(32),
+
+    PRIMARY KEY(school_info_id),
+    FOREIGN KEY(student_id) REFERENCES Student (student_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Student_Contact_Info(
+    contact_id INT NOT NULL AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    student_email VARBINARY(412) NOT NULL,
+    student_phone_number VARBINARY(39),
+    student_best_contact_number VARBINARY(39) NOT NULL,
+
+    PRIMARY KEY(contact_id),
+    FOREIGN KEY(student_id) REFERENCES Student (student_id) ON DELETE CASCADE
+);
+
 CREATE TABLE Father(
     father_id INT NOT NULL AUTO_INCREMENT,
-    father_first_name VARBINARY(92),
-    father_last_name VARBINARY(92),
-    father_phone_number VARBINARY(38),
+    student_id INT NOT NULL,
+    father_first_name VARBINARY(92) NOT NULL,
+    father_last_name VARBINARY(92) NOT NULL,
+    father_phone_number VARBINARY(39),
     father_email VARBINARY(412),
-    father_education VARBINARY(156),
+    father_education VARCHAR(128),
     father_place_birth VARBINARY(283),
     father_employer VARBINARY(283),
     father_job_title VARBINARY(283),
 
-    PRIMARY KEY(father_id)
+    PRIMARY KEY(father_id),
+    FOREIGN KEY(student_id) REFERENCES Student (student_id) ON DELETE CASCADE
 );
 
 CREATE TABLE Mother(
     mother_id INT NOT NULL AUTO_INCREMENT,
-    mother_first_name VARBINARY(92),
-    mother_last_name VARBINARY(92),
-    mother_phone_number VARBINARY(38),
+    student_id INT NOT NULL,
+    mother_first_name VARBINARY(92) NOT NULL,
+    mother_last_name VARBINARY(92) NOT NULL,
+    mother_phone_number VARBINARY(39),
     mother_email VARBINARY(412),
-    mother_education VARBINARY(156),
+    mother_education VARCHAR(128),
     mother_place_birth VARBINARY(283),
     mother_employer VARBINARY(283),
     mother_job_title VARBINARY(283),
 
-    PRIMARY KEY(mother_id)
+    PRIMARY KEY(mother_id),
+    FOREIGN KEY(student_id) REFERENCES Student (student_id) ON DELETE CASCADE
 );
 
 CREATE TABLE Guardian(
     guardian_id INT NOT NULL AUTO_INCREMENT,
-    guardian_name VARBINARY(156),
+    student_id INT NOT NULL,
+    guardian_name VARBINARY(156) NOT NULL,
     guardian_email VARBINARY(412),
     guardian_phone_number VARBINARY(38),
 
-    PRIMARY KEY(guardian_id)
+    PRIMARY KEY(guardian_id),
+    FOREIGN KEY(student_id) REFERENCES Student (student_id) ON DELETE CASCADE
 );
 
-CREATE TABLE Student(
-    student_id INT NOT NULL AUTO_INCREMENT,
-    student_email VARBINARY(412),
-    student_first_name VARBINARY(92),
-    student_middle_name VARBINARY(92),
-    student_last_name VARBINARY(92),
-    student_phone_number VARBINARY(38),
-    father_id INT,
-    mother_id INT,
-    guardian_id INT,
-    student_grade VARBINARY(30),
-    student_status VARBINARY(92),
-    student_city VARBINARY(92),
-    student_school VARBINARY(283),
+CREATE TABLE Student_Address(
+    address_id INT NOT NULL AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    address_street VARBINARY(283) NOT NULL,
+    address_city VARBINARY(92) NOT NULL,
+    address_state VARBINARY(92) NOT NULL,
+    address_zip VARBINARY(38),
 
-    PRIMARY KEY(student_id),
-    CONSTRAINT unique_student UNIQUE (student_email, student_first_name, student_last_name),
-    CONSTRAINT father_id_fk FOREIGN KEY(father_id) REFERENCES Father (father_id),
-    CONSTRAINT mother_id_fk FOREIGN KEY(mother_id) REFERENCES Mother (mother_id),
-    CONSTRAINT guardian_id_fk FOREIGN KEY(guardian_id) REFERENCES Guardian (guardian_id)
+    PRIMARY KEY(address_id),
+    FOREIGN KEY(student_id) REFERENCES Student (student_id) ON DELETE CASCADE
 );
